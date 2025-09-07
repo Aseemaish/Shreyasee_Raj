@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Health Early Warning System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals with Muted Teal Accent -->
+    <!-- Application Structure Plan: A thematic, single-page application with a top navigation bar for non-linear exploration. The structure flows from understanding the 'Crisis', visualizing the flawed 'Old Way' with an interactive diagram, exploring the multi-layered 'Solution', engaging with a real-time 'Simulation', and summarizing the 'Impact'. This design was chosen to guide the user through a narrative journey, making a complex technical solution understandable and its benefits tangible through direct interaction, which is more effective than a static, linear presentation. -->
+    <!-- Visualization & Content Choices: 1. Problem: Interactive cards (HTML/JS) -> Goal: Organize -> Breaks down complex issues into digestible parts. Bar Chart (Chart.js) -> Goal: Compare -> Shows disease prevalence. 2. Vicious Cycle: Interactive Diagram (HTML/JS) -> Goal: Change/Process -> Visualizes the slow, step-by-step failure of the current system. 3. Solution: Tabbed Interface (HTML/JS) -> Goal: Organize -> Deconstructs the 4-layer architecture for clarity. 4. Simulation: Line Chart (Chart.js) & Dynamic Text -> Goal: Relationships/Change -> Demonstrates cause-and-effect in real-time, proving the system's value. 5. Impact: Statistic Cards (HTML) -> Goal: Inform -> Presents key benefits in a scannable, high-impact format. All visualizations are chosen for clarity and interactivity. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f7f4;
+            color: #3d3d3d;
+        }
+        .nav-link {
+            transition: color 0.3s;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #147a75;
+            font-weight: 500;
+        }
+        .card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .cycle-step {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border-color: #d1d5db;
+        }
+        .cycle-step.active {
+            background-color: #14b8a6;
+            color: white;
+            border-color: #0f766e;
+        }
+        .cycle-step.completed {
+            background-color: #a7f3d0;
+            color: #065f46;
+            border-color: #6ee7b7;
+        }
+        .tab.active {
+            border-bottom-color: #14b8a6;
+            color: #0f766e;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 40vh;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white/80 backdrop-blur-lg shadow-sm sticky top-0 z-50">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0 font-bold text-xl text-teal-700">
+                    Project Sentinel
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#crisis" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-stone-600">The Crisis</a>
+                        <a href="#cycle" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-stone-600">The Vicious Cycle</a>
+                        <a href="#solution" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-stone-600">The Solution</a>
+                        <a href="#simulation" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-stone-600">Live Simulation</a>
+                        <a href="#impact" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-stone-600">Impact</a>
+                    </div>
+                </div>
+                <div class="md:hidden">
+                     <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-stone-600 hover:text-teal-700 hover:bg-stone-100 focus:outline-none">
+                        <span class="sr-only">Open main menu</span>
+                        <div id="menu-icon-open" class="block h-6 w-6">
+                            <span class="block h-0.5 w-6 bg-current transform transition duration-500 ease-in-out"></span>
+                            <span class="block h-0.5 w-6 bg-current mt-1.5 transform transition duration-500 ease-in-out"></span>
+                            <span class="block h-0.5 w-6 bg-current mt-1.5 transform transition duration-500 ease-in-out"></span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="md:hidden hidden">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="#crisis" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-stone-600">The Crisis</a>
+                <a href="#cycle" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-stone-600">The Vicious Cycle</a>
+                <a href="#solution" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-stone-600">The Solution</a>
+                <a href="#simulation" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-stone-600">Live Simulation</a>
+                <a href="#impact" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-stone-600">Impact</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section id="hero" class="py-20 md:py-32 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h1 class="text-4xl md:text-6xl font-bold tracking-tight text-stone-800">Smart Health Monitoring & Early Warning System</h1>
+                <p class="mt-6 max-w-3xl mx-auto text-lg md:text-xl text-stone-600">A proactive approach to combatting water-borne diseases in Rural Northeast India by leveraging IoT, Cloud Computing, and AI.</p>
+            </div>
+        </section>
+
+        <section id="crisis" class="py-16 md:py-24">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold text-stone-800">The Crisis: A Silent Epidemic</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-stone-600">Rural Northeast India faces a unique combination of challenges that makes its population highly vulnerable to water-borne diseases like Cholera, Typhoid, and Dysentery.</p>
+                </div>
+
+                <div class="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                    <div class="card bg-white p-6 rounded-lg shadow-md">
+                        <div class="flex items-center">
+                            <span class="text-3xl">🏞️</span>
+                            <h3 class="ml-4 text-xl font-semibold text-stone-800">Geographical Hurdles</h3>
+                        </div>
+                        <p class="mt-4 text-stone-600">The remote, hilly terrain makes building and maintaining piped water infrastructure extremely difficult. Many villages remain isolated, delaying access to healthcare and essential services.</p>
+                    </div>
+                    <div class="card bg-white p-6 rounded-lg shadow-md">
+                        <div class="flex items-center">
+                            <span class="text-3xl">🌧️</span>
+                            <h3 class="ml-4 text-xl font-semibold text-stone-800">Climatic Impact</h3>
+                        </div>
+                        <p class="mt-4 text-stone-600">Heavy monsoons cause frequent floods and landslides. This washes contaminants from sewage, agriculture, and waste directly into the natural springs, rivers, and wells that communities depend on for drinking water.</p>
+                    </div>
+                    <div class="card bg-white p-6 rounded-lg shadow-md">
+                         <div class="flex items-center">
+                            <span class="text-3xl">🧑‍🤝‍🧑</span>
+                            <h3 class="ml-4 text-xl font-semibold text-stone-800">Socio-Economic Factors</h3>
+                        </div>
+                        <p class="mt-4 text-stone-600">Limited healthcare facilities, a lack of awareness about water purification, and a heavy reliance on untreated water sources create a perfect storm for disease outbreaks. Data reporting is slow and manual.</p>
+                    </div>
+                </div>
+
+                <div class="mt-16 bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-semibold text-stone-800 text-center mb-4">Prevalence of Common Water-borne Diseases</h3>
+                    <div class="chart-container">
+                        <canvas id="diseaseChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="cycle" class="py-16 md:py-24 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold text-stone-800">The Vicious Cycle of Reaction</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-stone-600">The current approach is slow, inefficient, and always one step behind. Click through the steps below to see how an outbreak unfolds and why a new system is critical.</p>
+                </div>
+                <div class="mt-12 lg:grid lg:grid-cols-3 lg:gap-8 items-center">
+                    <div id="cycle-diagram" class="lg:col-span-2 flex flex-col items-center space-y-2">
+                        <div id="step-1" class="cycle-step w-full md:w-3/4 p-4 border-2 rounded-lg text-center">1. Contamination Event (e.g., Flood)</div>
+                        <div class="text-2xl text-stone-400">↓</div>
+                        <div id="step-2" class="cycle-step w-full md:w-3/4 p-4 border-2 rounded-lg text-center">2. People Consume Contaminated Water</div>
+                        <div class="text-2xl text-stone-400">↓</div>
+                        <div id="step-3" class="cycle-step w-full md:w-3/4 p-4 border-2 rounded-lg text-center">3. First Cases Appear in Village</div>
+                        <div class="text-2xl text-stone-400">↓</div>
+                        <div id="step-4" class="cycle-step w-full md:w-3/4 p-4 border-2 rounded-lg text-center">4. Manual Reporting by Health Worker</div>
+                        <div class="text-2xl text-stone-400">↓</div>
+                        <div id="step-5" class="cycle-step w-full md:w-3/4 p-4 border-2 rounded-lg text-center">5. Official Investigation & Confirmation</div>
+                        <div class="text-2xl text-stone-400">↓</div>
+                        <div id="step-6" class="cycle-step w-full md:w-3/4 p-4 border-2 rounded-lg text-center">6. Medical Teams Dispatched</div>
+                    </div>
+                    <div id="cycle-explanation" class="mt-8 lg:mt-0 p-6 bg-stone-100 rounded-lg min-h-[200px]">
+                        <h4 class="font-bold text-lg text-stone-800"></h4>
+                        <p class="mt-2 text-stone-600"></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="solution" class="py-16 md:py-24">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold text-stone-800">The Solution: A Proactive Architecture</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-stone-600">We propose an integrated, 4-layer system that shifts the paradigm from reaction to prevention through real-time data and actionable intelligence.</p>
+                </div>
+
+                <div class="mt-12 max-w-4xl mx-auto">
+                    <div class="border-b border-gray-200">
+                        <nav id="solution-tabs" class="-mb-px flex space-x-8" aria-label="Tabs">
+                            <button class="tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-stone-500 hover:text-teal-600 hover:border-teal-300" data-target="panel-1">Data Collection</button>
+                            <button class="tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-stone-500 hover:text-teal-600 hover:border-teal-300" data-target="panel-2">Data Transmission</button>
+                            <button class="tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-stone-500 hover:text-teal-600 hover:border-teal-300" data-target="panel-3">Cloud Analytics</button>
+                            <button class="tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-stone-500 hover:text-teal-600 hover:border-teal-300" data-target="panel-4">Alerting</button>
+                        </nav>
+                    </div>
+                    <div class="mt-8">
+                        <div id="panel-1" class="solution-panel">
+                            <h3 class="text-xl font-semibold mb-2">💧 Layer 1: Data Collection (The Edge)</h3>
+                            <p class="text-stone-600"><strong>IoT Water Sensors:</strong> Deployed in community water sources (wells, pumps) to measure critical parameters like Turbidity, pH, and Temperature in real-time. These act as our first line of defense.</p>
+                            <p class="mt-4 text-stone-600"><strong>Community Health App:</strong> A simple, icon-based Android app for ASHA workers to report symptoms (diarrhea, fever) with GPS tags, even when offline. This provides crucial on-the-ground health data.</p>
+                        </div>
+                        <div id="panel-2" class="solution-panel hidden">
+                            <h3 class="text-xl font-semibold mb-2">📡 Layer 2: Data Transmission</h3>
+                            <p class="text-stone-600"><strong>LoRaWAN (Long Range Wide Area Network):</strong> For areas with poor cellular connectivity, IoT sensor data is transmitted via low-power, long-range LoRaWAN gateways to the cloud. This ensures data flow from even the most remote locations.</p>
+                            <p class="mt-4 text-stone-600"><strong>Mobile Data Sync:</strong> The health worker's app securely syncs its offline-stored data to the cloud platform whenever it detects an available internet connection.</p>
+                        </div>
+                        <div id="panel-3" class="solution-panel hidden">
+                           <h3 class="text-xl font-semibold mb-2">☁️ Layer 3: Cloud Platform (The Brain)</h3>
+                            <p class="text-stone-600"><strong>Data Processing & Storage:</strong> All incoming data is ingested, cleaned, and stored in a scalable cloud database.</p>
+                            <p class="mt-4 text-stone-600"><strong>AI & Machine Learning Model:</strong> The core of the system. It correlates water quality data, weather patterns, and reported symptoms. Anomaly detection algorithms flag unusual spikes, while a predictive model calculates the real-time outbreak probability for each village.</p>
+                        </div>
+                        <div id="panel-4" class="solution-panel hidden">
+                            <h3 class="text-xl font-semibold mb-2">🚨 Layer 4: Information Dissemination</h3>
+                            <p class="text-stone-600"><strong>Public Health Dashboard:</strong> A web portal for health officials shows a GIS map with color-coded risk zones (Green, Yellow, Red). Officials can drill down into data for any location to make informed decisions.</p>
+                            <p class="mt-4 text-stone-600"><strong>Automated Early Warnings:</strong> When the risk threshold is crossed, the system automatically sends alerts via SMS and automated voice calls (in local languages) to community leaders and health workers, advising immediate preventive actions like boiling water.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="simulation" class="py-16 md:py-24 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold text-stone-800">Live Simulation: See It In Action</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-stone-600">This dashboard mimics what a public health official would see. Click the button below to simulate a heavy rainfall event and watch how our system responds in real-time.</p>
+                </div>
+                <div class="mt-12 max-w-5xl mx-auto p-6 bg-stone-50 rounded-lg shadow-lg border border-stone-200">
+                    <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div class="text-lg font-semibold">Village: Jatinga, Assam</div>
+                        <div class="flex items-center gap-4">
+                            <button id="simulate-btn" class="bg-teal-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-teal-700 transition duration-300">
+                                 simulating...
+                            </button>
+                            <button id="reset-btn" class="bg-stone-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-stone-600 transition duration-300">
+                                Reset
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 grid md:grid-cols-3 gap-6 text-center">
+                        <div class="bg-white p-4 rounded-lg shadow">
+                            <h4 class="text-sm font-medium text-stone-500">Water Turbidity (NTU)</h4>
+                            <p id="turbidity-value" class="text-3xl font-bold text-teal-600">5</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow">
+                            <h4 class="text-sm font-medium text-stone-500">Symptom Reports (24h)</h4>
+                            <p id="symptoms-value" class="text-3xl font-bold text-amber-600">0</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow">
+                            <h4 class="text-sm font-medium text-stone-500">Outbreak Risk Level</h4>
+                            <div id="risk-level-indicator" class="mt-2 text-3xl font-bold text-green-600 transition-colors duration-500">LOW</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8">
+                        <h4 class="text-lg font-semibold text-center mb-4 text-stone-700">Real-time Data Streams</h4>
+                        <div class="chart-container">
+                             <canvas id="simulationChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="mt-8">
+                        <h4 class="text-lg font-semibold text-stone-700">System Alert Log</h4>
+                        <div id="alert-log" class="mt-2 p-4 bg-stone-800 text-white font-mono text-sm rounded-lg h-32 overflow-y-auto">
+                            <p>> System Initialized. Monitoring active...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="impact" class="py-16 md:py-24">
+             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold text-stone-800">Projected Impact</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-stone-600">By shifting from a reactive to a proactive model, this system can fundamentally change public health outcomes.</p>
+                </div>
+                 <div class="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+                    <div class="card text-center bg-white p-6 rounded-lg shadow-md">
+                        <div class="text-4xl">❤️</div>
+                        <h3 class="mt-4 text-xl font-semibold text-stone-800">Saves Lives</h3>
+                        <p class="mt-2 text-stone-600">Early prevention drastically reduces mortality and morbidity from treatable water-borne illnesses.</p>
+                    </div>
+                     <div class="card text-center bg-white p-6 rounded-lg shadow-md">
+                        <div class="text-4xl">⏱️</div>
+                        <h3 class="mt-4 text-xl font-semibold text-stone-800">Faster Response</h3>
+                        <p class="mt-2 text-stone-600">Reduces outbreak detection and response time from days or weeks to mere hours.</p>
+                    </div>
+                     <div class="card text-center bg-white p-6 rounded-lg shadow-md">
+                        <div class="text-4xl">📈</div>
+                        <h3 class="mt-4 text-xl font-semibold text-stone-800">Data-Driven Policy</h3>
+                        <p class="mt-2 text-stone-600">Provides officials with real-time data to allocate resources and make informed decisions effectively.</p>
+                    </div>
+                    <div class="card text-center bg-white p-6 rounded-lg shadow-md">
+                        <div class="text-4xl">💰</div>
+                        <h3 class="mt-4 text-xl font-semibold text-stone-800">Cost-Effective</h3>
+                        <p class="mt-2 text-stone-600">The cost of preventing an outbreak is a fraction of the cost of managing a full-blown epidemic.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-white border-t border-stone-200">
+        <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 text-center text-stone-500">
+            <p>&copy; 2025 Project Sentinel. A B.Tech Computer Science Initiative.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+
+            mobileMenuButton.addEventListener('click', () => {
+                const isExpanded = mobileMenuButton.getAttribute('aria-expanded') === 'true';
+                mobileMenuButton.setAttribute('aria-expanded', !isExpanded);
+                mobileMenu.classList.toggle('hidden');
+                
+                const iconSpans = document.querySelectorAll('#menu-icon-open span');
+                if (!isExpanded) {
+                    iconSpans[0].classList.add('rotate-45', 'translate-y-2');
+                    iconSpans[1].classList.add('opacity-0');
+                    iconSpans[2].classList.add('-rotate-45', '-translate-y-2');
+                } else {
+                    iconSpans[0].classList.remove('rotate-45', 'translate-y-2');
+                    iconSpans[1].classList.remove('opacity-0');
+                    iconSpans[2].classList.remove('-rotate-45', '-translate-y-2');
+                }
+            });
+
+            document.querySelectorAll('#mobile-menu a').forEach(link => {
+                link.addEventListener('click', () => {
+                     mobileMenuButton.click();
+                });
+            });
+
+
+            const diseaseCtx = document.getElementById('diseaseChart').getContext('2d');
+            new Chart(diseaseCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Cholera', 'Typhoid', 'Dysentery', 'Hepatitis A', 'Giardiasis'],
+                    datasets: [{
+                        label: 'Estimated Annual Cases (per 100,000)',
+                        data: [120, 95, 250, 60, 180],
+                        backgroundColor: '#14b8a6',
+                        borderColor: '#0f766e',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                             callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y + ' cases';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Cases per 100,000 people'
+                            }
+                        }
+                    }
+                }
+            });
+
+            const cycleSteps = document.querySelectorAll('.cycle-step');
+            const cycleExplanation = document.getElementById('cycle-explanation');
+            const explanations = {
+                'step-1': { title: '1. Contamination Event', text: 'Heavy rainfall washes contaminants into a village well. The water is now unsafe, but nobody knows it yet.' },
+                'step-2': { title: '2. Consumption & Incubation', text: 'Villagers continue to use the water for drinking and cooking. Pathogens begin to incubate.' },
+                'step-3': { title: '3. First Cases Appear', text: 'Several days later, the first people fall ill with symptoms like diarrhea and vomiting. It is often dismissed as a common stomach bug.' },
+                'step-4': { title: '4. Manual Reporting (DELAY: 2-4 Days)', text: 'An ASHA worker notices an unusual pattern of illness. She must physically travel to the nearest health center to report her findings, which can take days.' },
+                'step-5': { title: '5. Official Investigation (DELAY: 3-5 Days)', text: 'Health officials travel to the village to collect water samples and confirm an outbreak. This process is slow and resource-intensive.' },
+                'step-6': { title: '6. Response Team Dispatched', text: 'Only after confirmation are medical teams and supplies sent. By now, the outbreak is widespread, and containing it is a major challenge.' }
+            };
+
+            let currentStep = 0;
+            const cycleInterval = setInterval(() => {
+                cycleSteps.forEach((s, i) => {
+                    if (i < currentStep) s.classList.add('completed');
+                    else if (i === currentStep) s.classList.add('active');
+                    else s.classList.remove('active', 'completed');
+                });
+                const stepId = `step-${currentStep + 1}`;
+                cycleExplanation.querySelector('h4').textContent = explanations[stepId].title;
+                cycleExplanation.querySelector('p').textContent = explanations[stepId].text;
+
+                currentStep = (currentStep + 1) % cycleSteps.length;
+            }, 3000);
+
+            cycleSteps.forEach(step => {
+                step.addEventListener('click', () => {
+                    clearInterval(cycleInterval);
+                    const stepId = step.id;
+                    const stepIndex = parseInt(stepId.split('-')[1]) - 1;
+                    cycleSteps.forEach((s, i) => {
+                         s.classList.remove('active', 'completed');
+                         if (i < stepIndex) s.classList.add('completed');
+                    });
+                    step.classList.add('active');
+                    cycleExplanation.querySelector('h4').textContent = explanations[stepId].title;
+                    cycleExplanation.querySelector('p').textContent = explanations[stepId].text;
+                });
+            });
+
+
+            const tabs = document.querySelectorAll('.tab');
+            const panels = document.querySelectorAll('.solution-panel');
+            document.getElementById('solution-tabs').addEventListener('click', (e) => {
+                if(e.target.classList.contains('tab')) {
+                    tabs.forEach(tab => tab.classList.remove('active'));
+                    e.target.classList.add('active');
+                    const targetPanel = document.getElementById(e.target.dataset.target);
+                    panels.forEach(panel => panel.classList.add('hidden'));
+                    targetPanel.classList.remove('hidden');
+                }
+            });
+            tabs[0].click();
+
+            const simulationCtx = document.getElementById('simulationChart').getContext('2d');
+            let simulationChart;
+            const turbidityValue = document.getElementById('turbidity-value');
+            const symptomsValue = document.getElementById('symptoms-value');
+            const riskIndicator = document.getElementById('risk-level-indicator');
+            const alertLog = document.getElementById('alert-log');
+            const simulateBtn = document.getElementById('simulate-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            let simulationTimeout;
+
+            function initSimulation() {
+                if (simulationChart) {
+                    simulationChart.destroy();
+                }
+                simulationChart = new Chart(simulationCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['T-10', 'T-9', 'T-8', 'T-7', 'T-6', 'T-5', 'T-4', 'T-3', 'T-2', 'T-1', 'Now'],
+                        datasets: [{
+                            label: 'Turbidity (NTU)',
+                            data: [5, 4, 6, 5, 5, 4, 5, 6, 5, 4, 5],
+                            borderColor: '#14b8a6',
+                            tension: 0.1,
+                            fill: false
+                        }, {
+                            label: 'Symptom Reports',
+                            data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                            borderColor: '#f59e0b',
+                            tension: 0.1,
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: { y: { beginAtZero: true } },
+                        animation: { duration: 500 }
+                    }
+                });
+                turbidityValue.textContent = '5';
+                symptomsValue.textContent = '0';
+                riskIndicator.textContent = 'LOW';
+                riskIndicator.className = 'mt-2 text-3xl font-bold text-green-600 transition-colors duration-500';
+                alertLog.innerHTML = '<p>> System Initialized. Monitoring active...</p>';
+                simulateBtn.disabled = false;
+                simulateBtn.textContent = 'Simulate Heavy Rainfall';
+            }
+
+            function logAlert(message, type = 'info') {
+                const p = document.createElement('p');
+                let prefix = '>';
+                if (type === 'warn') prefix = '<span class="text-yellow-400">> [WARN]</span>';
+                if (type === 'alert') prefix = '<span class="text-red-500">> [ALERT]</span>';
+                p.innerHTML = `${prefix} ${message}`;
+                alertLog.appendChild(p);
+                alertLog.scrollTop = alertLog.scrollHeight;
+            }
+            
+            function runSimulation() {
+                simulateBtn.disabled = true;
+                simulateBtn.textContent = 'Simulating...';
+                logAlert('Heavy rainfall detected by weather API.');
+
+                const steps = [
+                    { time: 2000, action: () => {
+                        logAlert('IoT sensor polling frequency increased.');
+                        const newTurbidity = 45 + Math.floor(Math.random() * 10);
+                        turbidityValue.textContent = newTurbidity;
+                        simulationChart.data.datasets[0].data.shift();
+                        simulationChart.data.datasets[0].data.push(newTurbidity);
+                        simulationChart.update();
+                    }},
+                    { time: 1500, action: () => {
+                        logAlert('Turbidity spike detected (48 NTU). Threshold exceeded.', 'warn');
+                        riskIndicator.textContent = 'MEDIUM';
+                        riskIndicator.className = 'mt-2 text-3xl font-bold text-yellow-500 transition-colors duration-500';
+                    }},
+                    { time: 2500, action: () => {
+                        logAlert('Health app sync: 2 cases of diarrhea reported from GPS zone 1.');
+                        symptomsValue.textContent = 2;
+                        simulationChart.data.datasets[1].data.shift();
+                        simulationChart.data.datasets[1].data.push(2);
+                        simulationChart.update();
+                    }},
+                    { time: 1000, action: () => {
+                        logAlert('AI correlated turbidity spike with symptom reports.', 'alert');
+                        riskIndicator.textContent = 'HIGH';
+                        riskIndicator.className = 'mt-2 text-3xl font-bold text-red-600 transition-colors duration-500';
+                    }},
+                    { time: 500, action: () => {
+                        logAlert('EARLY WARNING SENT: SMS & IVR alerts dispatched to community leaders.', 'alert');
+                        simulateBtn.textContent = 'Simulation Complete';
+                    }}
+                ];
+
+                let cumulativeTime = 0;
+                steps.forEach(step => {
+                    cumulativeTime += step.time;
+                    simulationTimeout = setTimeout(step.action, cumulativeTime);
+                });
+            }
+
+            simulateBtn.addEventListener('click', runSimulation);
+            resetBtn.addEventListener('click', () => {
+                clearTimeout(simulationTimeout);
+                initSimulation();
+            });
+
+            initSimulation();
+        });
+    </script>
+</body>
+</html>
